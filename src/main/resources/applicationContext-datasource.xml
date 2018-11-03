@@ -30,6 +30,7 @@
         <property name="username" value="${db.username}"/>
         <property name="password" value="${db.password}"/>
         <!-- 连接池启动时的初始值 -->
+
         <property name="initialSize" value="${db.initialSize}"/>
         <!-- 连接池的最大值 -->
         <property name="maxActive" value="${db.maxActive}"/>
@@ -73,7 +74,6 @@
                 </bean>
             </array>
         </property>
-
     </bean>
 
     <bean name="mapperScannerConfigurer" class="org.mybatis.spring.mapper.MapperScannerConfigurer">

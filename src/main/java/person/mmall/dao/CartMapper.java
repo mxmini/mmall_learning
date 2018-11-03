@@ -1,6 +1,6 @@
 package person.mmall.dao;
 
-import person.mmall.pojo.Cart;
+        import person.mmall.pojo.Cart;
 
 public interface CartMapper {
     int deleteByPrimaryKey(Integer id);

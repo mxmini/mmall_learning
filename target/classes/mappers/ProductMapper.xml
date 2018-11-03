@@ -176,4 +176,25 @@
       update_time = now()
     where id = #{id,jdbcType=INTEGER}
   </update>
+  <select id="selectList" resultMap="BaseResultMap">
+    select
+    <include refid="Base_Column_List" />
+    from mmall_product order by id asc
+  </select>
+  <select id="selectProductByIdOrName" resultMap="BaseResultMap" parameterType="map">
+    select
+    <include refid="Base_Column_List" />
+    form mmall_prodcut
+    <where>
+      <if test="name != null">
+        and like name = #{name}
+      </if>
+      <if test="productId != null">
+        and id = #{productId}
+      </if>
+    </where>
+  </select>
+  <select id="selectByProductId" parameterType="integer" resultType="int">
+    select count(1) from mmall_prodcut where id = #{productId}
+  </select>
 </mapper>
