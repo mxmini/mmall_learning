@@ -64,6 +64,8 @@ public class OrderController {
         return orderService.orderDetail(orderNo);
     }
 
+    @RequestMapping("cancel.do")
+    @ResponseBody
     public ServerResponse cancel(HttpSession session, Long orderNo){
 
         User currentUser = (User) session.getAttribute(Constant.CURRENT_USER);
