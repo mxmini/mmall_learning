@@ -17,4 +17,6 @@ public interface ICategoryService {
 
      ServerResponse<Set<Category>> getLevelAndDeepCategory(Integer categoryId);
 
+     ServerResponse<List<Integer>> getCategoryAndChildrenById(Integer id);
+
 }

@@ -6,9 +6,14 @@ import com.google.common.collect.Lists;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import person.mmall.commom.Constant;
+import person.mmall.commom.ResponseCode;
 import person.mmall.commom.ServerResponse;
+import person.mmall.dao.CategoryMapper;
 import person.mmall.dao.ProductMapper;
+import person.mmall.pojo.Category;
 import person.mmall.pojo.Product;
+import person.mmall.service.ICategoryService;
 import person.mmall.service.IProductService;
 import person.mmall.utils.DateTimeUtil;
 import person.mmall.utils.PropertiesUtil;
@@ -22,6 +27,70 @@ public class ProductServiceImpl implements IProductService {
 
     @Autowired
     private ProductMapper productMapper;
+    @Autowired
+    private CategoryMapper categoryMapper;
+    @Autowired
+    private ICategoryService iCategoryService;
+
+    public ServerResponse productDetail(Integer productId){
+
+        if (null == productId)
+            return ServerResponse.CreateBySuccessMessage("参数错误");
+
+        Product product = productMapper.selectByPrimaryKey(productId);
+        if (null == product)
+            return ServerResponse.CreateByErrorMessage("产品不存在");
+
+        return ServerResponse.CreateBySuccess(product);
+    }
+
+    public ServerResponse searchProduct(Integer categoryId, String keyWord, Integer pageNum, Integer pageSize, String orderBy){
+
+        if (null == categoryId && StringUtils.isBlank(keyWord))
+            return ServerResponse.CreateByErrorCodeMessage(ResponseCode.ILLEGAL_ARGUMENT.getCode(), ResponseCode.ILLEGAL_ARGUMENT.getDesc());
+
+        List<Integer> categoryIdList = Lists.newArrayList();
+        if (null != categoryId){
+            Category category = categoryMapper.selectByPrimaryKey(categoryId);
+            if (null == category && StringUtils.isBlank(keyWord))
+            {//没有该分类，并且也没有关键字，返回一个空集合，不报错
+                PageHelper.startPage(pageSize, pageNum);
+                List<ProductListVo> productListVoList = Lists.newArrayList();
+                PageInfo result = new PageInfo(productListVoList);
+                return ServerResponse.CreateBySuccess(result);
+            }
+
+            categoryIdList = iCategoryService.getCategoryAndChildrenById(categoryId).getData();
+        }
+
+        if (StringUtils.isNotBlank(keyWord)){
+            keyWord = new StringBuilder().append("%").append(keyWord).append("%").toString();
+        }
+
+        PageHelper.startPage(pageSize, pageNum);
+        if (StringUtils.isNotBlank(orderBy)){
+            if (Constant.ProductOrderBy.PRICE_ASC_DESC.contains(orderBy)){
+                String[] orderArray = orderBy.split("_");
+                PageHelper.orderBy(orderArray[0] + " " + orderArray[1]);
+            }
+        }
+
+        List<Product> productList = productMapper.selectByNameAndCategoryIds(StringUtils.isBlank(keyWord)?null:keyWord,categoryIdList.size()==0?null:categoryIdList);
+
+        List<ProductListVo> productListVoList = Lists.newArrayList();
+        for(Product product : productList){
+            ProductListVo productListVo = assembleProductListVo(product);
+            productListVoList.add(productListVo);
+        }
+
+        PageInfo pageInfo = new PageInfo(productList);
+        pageInfo.setList(productListVoList);
+
+        return ServerResponse.CreateBySuccess(pageInfo);
+    }
+
+
+    //manager product at follow
 
     /**
      * 利用mybatis plugin  PageHelper 对商品进行分页显示
@@ -69,22 +138,25 @@ public class ProductServiceImpl implements IProductService {
     public ServerResponse getProductInformation(Integer productId){
 
         if (null == productId)
-            return ServerResponse.CreateByErrorMessage("productId参数错误");
+            return ServerResponse.CreateByErrorCodeMessage(ResponseCode.ILLEGAL_ARGUMENT.getCode(),ResponseCode.ILLEGAL_ARGUMENT.getDesc());
 
         Product product = productMapper.selectByPrimaryKey(productId);
 
         if ( null == product)
-            return ServerResponse.CreateByErrorMessage("获取商品信息失败");
+            return ServerResponse.CreateByErrorMessage("商品已经被删除");
 
         return ServerResponse.CreateBySuccess(assembleProductVo(product));
     }
 
     public ServerResponse setProductStatus(Integer productId, Integer status){
 
+        if (null == productId)
+            return ServerResponse.CreateByErrorCodeMessage(ResponseCode.ILLEGAL_ARGUMENT.getCode(), ResponseCode.ILLEGAL_ARGUMENT.getDesc());
+
         int resultCount = productMapper.selectByProductId(productId);
 
-        if (resultCount == 0)
-            return ServerResponse.CreateByErrorMessage("产品ID不存在");
+        if (0 == resultCount )
+            return ServerResponse.CreateByErrorMessage("商品已经被删除");
 
         Product product = new Product();
 
@@ -137,6 +209,13 @@ public class ProductServiceImpl implements IProductService {
         productDetailsVo.setStatus(product.getStatus());
         productDetailsVo.setCreateTime(DateTimeUtil.dateToStr(product.getCreateTime(), "yyyy-MM-dd hh:mm::ss"));
         productDetailsVo.setUpdateTime(DateTimeUtil.dateToStr(product.getUpdateTime(), "yyyy-MM-dd hh:mm::ss"));
+
+
+        Category category = categoryMapper.selectByPrimaryKey(product.getCategoryId());
+        if(null == category)
+            productDetailsVo.setParentCategoryId(0);
+        else
+            productDetailsVo.setParentCategoryId(category.getParentId());
 
         return productDetailsVo;
     }

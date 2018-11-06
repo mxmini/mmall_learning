@@ -176,4 +176,17 @@
       update_time = now()
     where id = #{id,jdbcType=INTEGER}
   </update>
+  <delete id="deleteByUserIdWithShippingId" parameterType="map" >
+    delete from mmall_shipping where user_id = #{userId} and id = #{shippingId}
+  </delete>
+  <select id="selectByUserIdWithShippingId" parameterType="map" resultMap="BaseResultMap">
+    select
+    <include refid="Base_Column_List" />
+    from mmall_shipping where id = #{shippingId} and user_id = #{userId}
+  </select>
+  <select id="selectByUserId" parameterType="Integer" resultMap="BaseResultMap">
+    select
+    <include refid="Base_Column_List" />
+    from where user_id = #{userId}
+  </select>
 </mapper>

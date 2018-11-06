@@ -1,5 +1,6 @@
 package person.mmall.service.impl;
 
+import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -80,7 +81,7 @@ public class CategoryServiceImpl implements ICategoryService {
      * @param parentId
      * @return
      */
-    private void findChidCategory(Set<Category> categorySet, Integer parentId){
+    private void findChildCategory(Set<Category> categorySet, Integer parentId){
 
         Category category = categoryMapper.selectByPrimaryKey(parentId);
         if (category != null)
@@ -88,7 +89,7 @@ public class CategoryServiceImpl implements ICategoryService {
 
         List<Category> categoryList = categoryMapper.selectCategoryByParentId(parentId);
         for (Category categoryItem: categoryList) {
-            findChidCategory(categorySet, categoryItem.getId());
+            findChildCategory(categorySet, categoryItem.getId());
 
         }
 
@@ -97,9 +98,22 @@ public class CategoryServiceImpl implements ICategoryService {
     public  ServerResponse<Set<Category>> getLevelAndDeepCategory(Integer categoryId){
 
         Set<Category> categorySet = Sets.newHashSet();
-        findChidCategory(categorySet, categoryId);
+        findChildCategory(categorySet, categoryId);
 
         return ServerResponse.CreateBySuccess(categorySet);
+    }
+
+    public ServerResponse<List<Integer>> getCategoryAndChildrenById(Integer id){
+
+        Set<Category> categorySet = Sets.newHashSet();
+        findChildCategory(categorySet, id);
+
+        List<Integer> categoryIdList = Lists.newArrayList();
+        for (Category category: categorySet){
+            categoryIdList.add(category.getId());
+        }
+
+        return ServerResponse.CreateBySuccess(categoryIdList);
     }
 
 

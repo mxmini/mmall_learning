@@ -23,4 +23,12 @@ public interface ProductMapper {
     List<Product> selectProductByIdOrName(@Param("productId") Integer productId, @Param("name") String name);
 
     int selectByProductId(Integer productId);
+
+    int selectByCategoryId(Integer categoryId);
+
+    List<Product> selectProductByCategoryIdWithOrderBy(@Param("kayWord") String kayWord, @Param("orderBy") String orderBy);
+
+    Integer countProduct();
+
+    List<Product> selectByNameAndCategoryIds(@Param("productName")String productName,@Param("categoryIdList")List<Integer> categoryIdList);
 }
